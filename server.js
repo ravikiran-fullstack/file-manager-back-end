@@ -1,41 +1,35 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 
-const server = http.createServer( async (req, res) => {
-  const url = req.url;
-  const method = req.method;
-  
-  if (url === '/fm' && method === 'POST') {
-    const body = [];
-    req.on('data', (chunk) => {
-      body.push(chunk);
-    });
-    req.on('end', () => {
-      const parsedBody = Buffer.concat(body).toString();
-      const message = parsedBody.split('=')[1];
-      fs.appendFileSync('message.txt', message);        
-    });
-   
-   const data = await readDirectory();
-   res.setHeader("Access-Control-Allow-Origin", "*");
-   res.setHeader('Content-Type', 'application/json');
-   
-   return res.end(JSON.stringify({filesInfo: data, path: __dirname}));
-  }
-});
+const app = express();
 
-server.listen(3000);
+app.listen(3500);
 
-function readDirectory() {
+app.use(cors());
+app.options('*', cors());
+app.use(bodyParser.json());
+
+app.post("/fm", async (req, res) => {
+  console.log(req.body);
+  const address = req.body.address;
+  const data = await readDirectory(address);
+  res.json({ filesInfo: data, path: __dirname });
+})
+
+function readDirectory(address) {
   return new Promise(resolve => {
-    const fileNames = fs.readdirSync(__dirname);
+    const fileNames = fs.readdirSync(address);
 
     filesObjArr = fileNames.map((file) => {
       let fileObj = {};
       fileObj.name = file;
       
-      const statsObj = fs.statSync(file);
+      console.log(file, path.extname(file) === '');
+      const statsObj = fs.statSync(path.join(address, file));
 
       fileObj.extension = statsObj.isFile()? path.extname(file): "directory";
       return fileObj;
