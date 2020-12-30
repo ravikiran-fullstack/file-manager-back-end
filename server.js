@@ -9,7 +9,6 @@ const server = http.createServer( async (req, res) => {
   if (url === '/fm' && method === 'POST') {
     const body = [];
     req.on('data', (chunk) => {
-      console.log(chunk);
       body.push(chunk);
     });
     req.on('end', () => {
@@ -19,7 +18,6 @@ const server = http.createServer( async (req, res) => {
     });
    
    const data = await readDirectory();
-   console.log(data);
    res.setHeader("Access-Control-Allow-Origin", "*");
    res.setHeader('Content-Type', 'application/json');
    
@@ -36,8 +34,10 @@ function readDirectory() {
     filesObjArr = fileNames.map((file) => {
       let fileObj = {};
       fileObj.name = file;
-      fileObj.extension =
-        path.extname(file) === "" ? "directory" : path.extname(file);
+      
+      const statsObj = fs.statSync(file);
+
+      fileObj.extension = statsObj.isFile()? path.extname(file): "directory";
       return fileObj;
     });
     resolve(filesObjArr);
